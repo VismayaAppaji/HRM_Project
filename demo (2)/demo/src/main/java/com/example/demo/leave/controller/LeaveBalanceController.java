@@ -1,0 +1,61 @@
+package com.example.demo.leave.controller;
+
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.demo.leave.entity.LeaveBalance;
+import com.example.demo.leave.service.LeaveBalanceService;
+
+@RestController
+@RequestMapping("/api/leave-balances")
+public class LeaveBalanceController {
+
+    private final LeaveBalanceService leaveBalanceService;
+
+    public LeaveBalanceController(
+            LeaveBalanceService leaveBalanceService) {
+
+        this.leaveBalanceService = leaveBalanceService;
+    }
+
+    @PostMapping("/employee/{employeeId}")
+    public ResponseEntity<LeaveBalance> createLeaveBalance(
+            @PathVariable UUID employeeId) {
+
+        LeaveBalance created =
+                leaveBalanceService
+                        .createLeaveBalance(employeeId);
+
+        return new ResponseEntity<>(
+                created,
+                HttpStatus.CREATED);
+    }
+
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<LeaveBalance> getLeaveBalance(
+            @PathVariable UUID employeeId) {
+
+        return ResponseEntity.ok(
+                leaveBalanceService
+                        .getLeaveBalance(employeeId));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<LeaveBalance> getMyLeaveBalance(
+            Authentication authentication) {
+
+        String username = authentication.getName();
+
+        return ResponseEntity.ok(
+                leaveBalanceService
+                        .getMyLeaveBalance(username));
+    }
+}

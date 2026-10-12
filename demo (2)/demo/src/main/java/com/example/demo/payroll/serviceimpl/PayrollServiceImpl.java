@@ -1,0 +1,257 @@
+package com.example.demo.payroll.serviceimpl;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.auth.entity.AppUser;
+import com.example.demo.auth.repository.AppUserRepository;
+import com.example.demo.employee.entity.Employee;
+import com.example.demo.employee.repository.EmployeeRepository;
+import com.example.demo.email.service.EmailService;
+import com.example.demo.leave.entity.LeaveBalance;
+import com.example.demo.leave.repository.LeaveBalanceRepository;
+import com.example.demo.payroll.entity.Payroll;
+import com.example.demo.payroll.repository.PayrollRepository;
+import com.example.demo.payroll.service.PayrollService;
+import com.example.demo.payslip.service.PayslipService;
+import com.example.demo.salary.entity.EmployeeSalary;
+import com.example.demo.salary.repository.EmployeeSalaryRepository;
+
+@Service
+public class PayrollServiceImpl implements PayrollService {
+
+    private final PayrollRepository payrollRepository;
+    private final EmployeeSalaryRepository employeeSalaryRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+    private final EmployeeRepository employeeRepository;
+    private final PayslipService payslipService;
+    private final EmailService emailService;
+    private final AppUserRepository appUserRepository;
+
+    public PayrollServiceImpl(
+            PayrollRepository payrollRepository,
+            EmployeeSalaryRepository employeeSalaryRepository,
+            LeaveBalanceRepository leaveBalanceRepository,
+            EmployeeRepository employeeRepository,
+            PayslipService payslipService,
+            EmailService emailService,
+            AppUserRepository appUserRepository) {
+
+        this.payrollRepository = payrollRepository;
+        this.employeeSalaryRepository = employeeSalaryRepository;
+        this.leaveBalanceRepository = leaveBalanceRepository;
+        this.employeeRepository = employeeRepository;
+        this.payslipService = payslipService;
+        this.emailService = emailService;
+        this.appUserRepository = appUserRepository;
+    }
+
+    @Override
+    public Payroll generatePayroll(
+            UUID employeeId,
+            String payPeriod) {
+
+        // Prevent duplicate payroll generation
+        if (payrollRepository.existsByEmployeeIdAndPayPeriod(
+                employeeId,
+                payPeriod)) {
+
+            throw new RuntimeException(
+                    "Payroll already generated for this employee and pay period");
+        }
+
+        // Find employee
+        Employee employee =
+                employeeRepository.findById(employeeId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Employee not found"));
+
+        // Find active employee salary
+        EmployeeSalary employeeSalary =
+                employeeSalaryRepository
+                        .findByEmployeeIdAndActiveTrue(employeeId)
+                        .stream()
+                        .findFirst()
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Active salary not found for employee"));
+
+        // Find employee leave balance
+        LeaveBalance leaveBalance =
+                leaveBalanceRepository
+                        .findByEmployeeId(employeeId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Leave balance not found for employee"));
+
+        // Create payroll
+        Payroll payroll = new Payroll();
+
+        payroll.setEmployeeId(employeeId);
+        payroll.setPayPeriod(payPeriod);
+
+        // Earnings
+        payroll.setBasicSalary(
+                employeeSalary.getBasicSalary());
+
+        payroll.setHra(
+                employeeSalary.getHra());
+
+        payroll.setSpecialAllowance(
+                employeeSalary.getSpecialAllowance());
+
+        payroll.setGrossSalary(
+                employeeSalary.getGrossSalary());
+
+        /*
+         * PF = 12% of Basic Salary
+         */
+        BigDecimal pf =
+                employeeSalary.getBasicSalary()
+                        .multiply(new BigDecimal("0.12"));
+
+        /*
+         * ESI currently not applicable
+         */
+        BigDecimal esi = BigDecimal.ZERO;
+
+        /*
+         * Professional Tax
+         */
+        BigDecimal professionalTax =
+                new BigDecimal("200.00");
+
+        /*
+         * Total deductions
+         */
+        BigDecimal totalDeductions =
+                pf.add(esi)
+                  .add(professionalTax);
+
+        /*
+         * Net salary
+         */
+        BigDecimal netSalary =
+                employeeSalary.getGrossSalary()
+                        .subtract(totalDeductions);
+
+        payroll.setPf(pf);
+        payroll.setEsi(esi);
+        payroll.setProfessionalTax(professionalTax);
+        payroll.setTotalDeductions(totalDeductions);
+        payroll.setNetSalary(netSalary);
+
+        /*
+         * Leave balances
+         */
+        payroll.setCasualLeaveBalance(
+                leaveBalance.getCasualLeaveBalance());
+
+        payroll.setSickLeaveBalance(
+                leaveBalance.getSickLeaveBalance());
+
+        payroll.setEarnedLeaveBalance(
+                leaveBalance.getEarnedLeaveBalance());
+
+        /*
+         * Payroll status and timestamp
+         */
+        payroll.setStatus("GENERATED");
+        payroll.setGeneratedAt(LocalDateTime.now());
+
+        /*
+         * Save payroll first
+         */
+        Payroll savedPayroll =
+                payrollRepository.save(payroll);
+
+        /*
+         * Automatic Payslip Generation + Email
+         */
+        try {
+
+            /*
+             * Generate payslip PDF.
+             *
+             * This uses the internal one-argument
+             * PayslipService method because this
+             * operation is performed by the payroll
+             * generation process, not by an employee
+             * downloading a payslip.
+             */
+            byte[] payslipPdf =
+                    payslipService.generatePayslipPdf(
+                            savedPayroll.getId());
+
+            /*
+             * Send PDF to employee's registered email.
+             */
+            emailService.sendPayslipEmail(
+                    employeeId,
+                    savedPayroll.getId(),
+                    employee.getEmail(),
+                    payPeriod,
+                    payslipPdf);
+
+        } catch (Exception e) {
+
+            /*
+             * Payroll remains GENERATED even if
+             * payslip generation or email delivery fails.
+             *
+             * EmailService records FAILED delivery
+             * in EmailDeliveryLog.
+             */
+        }
+
+        return savedPayroll;
+    }
+
+    @Override
+    public Payroll getPayrollById(UUID id) {
+
+        return payrollRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Payroll not found"));
+    }
+
+    @Override
+    public List<Payroll> getPayrollsByEmployee(
+            UUID employeeId) {
+
+        return payrollRepository.findByEmployeeId(
+                employeeId);
+    }
+
+    @Override
+    public List<Payroll> getAllPayrolls() {
+
+        return payrollRepository.findAll();
+    }
+
+    @Override
+    public List<Payroll> getMyPayrolls(
+            String username) {
+
+        AppUser appUser =
+                appUserRepository.findByUsername(username)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"));
+
+        if (appUser.getEmployeeId() == null) {
+
+            throw new RuntimeException(
+                    "No employee is linked to this user");
+        }
+
+        return payrollRepository.findByEmployeeId(
+                appUser.getEmployeeId());
+    }
+}

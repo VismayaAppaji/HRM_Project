@@ -1,0 +1,913 @@
+/* =========================================================
+   HR PAYROLL DASHBOARD
+   ========================================================= */
+
+.dashboard-page {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 30px 32px 40px;
+  box-sizing: border-box;
+  color: #172033;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.dashboard-title-section {
+  min-width: 0;
+}
+
+.page-eyebrow,
+.card-eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 29px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.dashboard-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   HEADER ACTIONS
+   ========================================================= */
+
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.period-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-width: 185px;
+  min-height: 44px;
+
+  padding: 7px 12px;
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.period-selector svg {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.period-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.period-content span {
+  margin-bottom: 2px;
+
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.period-selector select {
+  padding: 0;
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.refresh-button {
+  height: 44px;
+
+  padding: 0 15px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  border: 1px solid #dbe2ea;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #334155;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: dashboard-spin 1s linear infinite;
+}
+
+@keyframes dashboard-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.dashboard-error {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 12px 14px;
+  margin-bottom: 18px;
+
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+
+  background: #fef2f2;
+  color: #b91c1c;
+
+  font-size: 12px;
+}
+
+/* =========================================================
+   KPI CARDS
+   ========================================================= */
+
+.dashboard-page .dashboard-stats {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+
+  gap: 14px;
+
+  margin-bottom: 18px;
+}
+
+.dashboard-page .stat-card {
+  position: relative;
+
+  display: flex !important;
+  align-items: flex-start !important;
+
+  gap: 13px;
+
+  min-height: 120px;
+
+  padding: 18px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e7ebf0;
+  border-radius: 13px;
+
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.035);
+
+  transition: all 0.2s ease;
+}
+
+.dashboard-page .stat-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #d9e0e8;
+
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.06);
+}
+
+/* =========================================================
+   KPI ICONS
+   ========================================================= */
+
+.dashboard-page .stat-icon {
+  width: 41px;
+  height: 41px;
+
+  flex: 0 0 41px;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+}
+
+.stat-icon.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.stat-icon.orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.stat-icon.green {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.stat-icon.red {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* =========================================================
+   KPI CONTENT
+   ========================================================= */
+
+.dashboard-page .stat-content {
+  display: flex !important;
+  flex-direction: column !important;
+
+  min-width: 0;
+}
+
+.dashboard-page .stat-title {
+  color: #64748b;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  line-height: 1.35;
+}
+
+.dashboard-page .stat-content strong {
+  display: block;
+
+  margin-top: 6px;
+
+  color: #111827;
+
+  font-size: 27px;
+  line-height: 1;
+
+  font-weight: 700;
+}
+
+.dashboard-page .stat-content small {
+  display: block;
+
+  margin-top: 7px;
+
+  color: #94a3b8;
+
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+/* =========================================================
+   MAIN GRID
+   ========================================================= */
+
+.dashboard-page .dashboard-grid {
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(0, 1.15fr)
+    minmax(0, 0.85fr) !important;
+
+  gap: 18px;
+
+  margin-bottom: 18px;
+}
+
+/* =========================================================
+   CARD RESET
+   IMPORTANT:
+   Prevents old/global CSS from making cards flex/grid
+   ========================================================= */
+
+.dashboard-page .dashboard-card {
+  display: block !important;
+
+  width: 100%;
+
+  background: #ffffff;
+
+  border: 1px solid #e7ebf0;
+  border-radius: 13px;
+
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.035);
+
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   CARD HEADER
+   ========================================================= */
+
+.dashboard-page .card-header {
+  display: flex !important;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  width: 100%;
+
+  gap: 15px;
+
+  padding: 19px 20px 17px;
+
+  box-sizing: border-box;
+}
+
+.dashboard-page .card-header h2 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 16px;
+  line-height: 1.3;
+
+  font-weight: 700;
+}
+
+.dashboard-page .card-header p {
+  margin: 4px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.dashboard-page .card-header-icon {
+  width: 36px;
+  height: 36px;
+
+  flex: 0 0 36px;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.dashboard-page .payroll-header-icon {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.dashboard-page .leave-icon {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* =========================================================
+   PAYROLL CARD
+   ========================================================= */
+
+.dashboard-page .payroll-card {
+  display: block !important;
+}
+
+/* =========================================================
+   PAYROLL PROGRESS
+   ========================================================= */
+
+.dashboard-page .payroll-progress-section {
+  display: block !important;
+
+  width: 100%;
+
+  padding: 0 20px 18px;
+
+  box-sizing: border-box;
+}
+
+.dashboard-page .progress-header {
+  display: flex !important;
+
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+
+  margin-bottom: 8px;
+}
+
+.dashboard-page .progress-header span {
+  color: #64748b;
+
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.dashboard-page .progress-header strong {
+  color: #2563eb;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboard-page .progress-track {
+  display: block !important;
+
+  width: 100%;
+  height: 6px;
+
+  overflow: hidden;
+
+  background: #eef2f7;
+
+  border-radius: 999px;
+}
+
+.dashboard-page .progress-fill {
+  display: block !important;
+
+  height: 100%;
+
+  background: #2563eb;
+
+  border-radius: 999px;
+
+  transition: width 0.4s ease;
+}
+
+/* =========================================================
+   PAYROLL OVERVIEW
+   IMPORTANT FIX:
+   Force vertical rows
+   ========================================================= */
+
+.dashboard-page .payroll-overview {
+  display: block !important;
+
+  width: 100%;
+
+  border-top: 1px solid #eef2f6;
+
+  box-sizing: border-box;
+}
+
+.dashboard-page .overview-row {
+  display: flex !important;
+
+  width: 100%;
+  min-height: 47px;
+
+  padding: 0 20px;
+
+  box-sizing: border-box;
+
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dashboard-page .overview-row:last-child {
+  border-bottom: none;
+}
+
+.dashboard-page .overview-label {
+  display: flex !important;
+
+  align-items: center;
+
+  gap: 9px;
+
+  color: #475569;
+
+  font-size: 12px;
+}
+
+.dashboard-page .overview-row strong {
+  color: #172033;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   DOTS
+   ========================================================= */
+
+.dashboard-page .dot {
+  width: 7px;
+  height: 7px;
+
+  flex: 0 0 7px;
+
+  border-radius: 50%;
+}
+
+.blue-dot {
+  background: #3b82f6;
+}
+
+.orange-dot {
+  background: #f97316;
+}
+
+.green-dot {
+  background: #10b981;
+}
+
+.red-dot {
+  background: #ef4444;
+}
+
+/* =========================================================
+   LEAVE CARD
+   ========================================================= */
+
+.dashboard-page .leave-card {
+  display: block !important;
+}
+
+/* =========================================================
+   LEAVE SUMMARY
+   IMPORTANT FIX:
+   Force vertical list
+   ========================================================= */
+
+.dashboard-page .leave-summary {
+  display: block !important;
+
+  width: 100%;
+
+  border-top: 1px solid #eef2f6;
+
+  box-sizing: border-box;
+}
+
+.dashboard-page .leave-item {
+  display: flex !important;
+
+  width: 100%;
+  min-height: 63px;
+
+  padding: 0 20px;
+
+  box-sizing: border-box;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dashboard-page .leave-item:last-child {
+  border-bottom: none;
+}
+
+.dashboard-page .leave-item-left {
+  display: flex !important;
+
+  align-items: center;
+
+  gap: 11px;
+
+  min-width: 0;
+}
+
+.dashboard-page .leave-badge {
+  width: 35px;
+  height: 35px;
+
+  flex: 0 0 35px;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.dashboard-page .leave-badge.casual {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.dashboard-page .leave-badge.sick {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.dashboard-page .leave-badge.earned {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.dashboard-page .leave-text {
+  display: flex !important;
+  flex-direction: column !important;
+
+  gap: 2px;
+
+  min-width: 0;
+}
+
+.dashboard-page .leave-text strong {
+  color: #334155;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-page .leave-text span {
+  color: #94a3b8;
+
+  font-size: 10px;
+}
+
+.dashboard-page .leave-number {
+  flex-shrink: 0;
+
+  color: #172033;
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   SYSTEM STATUS
+   ========================================================= */
+
+.dashboard-page .system-status {
+  display: block !important;
+
+  overflow: hidden;
+}
+
+.dashboard-page .system-header {
+  display: flex !important;
+
+  align-items: center;
+
+  border-bottom: 1px solid #eef2f6;
+}
+
+.dashboard-page .status-badge {
+  display: inline-flex !important;
+
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+
+  background: #ecfdf5;
+  color: #047857;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.dashboard-page .system-items {
+  display: grid !important;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  width: 100%;
+}
+
+.dashboard-page .system-item {
+  min-height: 58px;
+
+  padding: 0 18px;
+
+  display: flex !important;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  box-sizing: border-box;
+
+  border-right: 1px solid #eef2f6;
+}
+
+.dashboard-page .system-item:last-child {
+  border-right: none;
+}
+
+.dashboard-page .system-item-info {
+  display: flex !important;
+
+  align-items: center;
+
+  gap: 8px;
+
+  color: #475569;
+
+  font-size: 11px;
+}
+
+.dashboard-page .system-item strong {
+  color: #059669;
+
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.dashboard-page .system-indicator {
+  width: 6px;
+  height: 6px;
+
+  flex: 0 0 6px;
+
+  border-radius: 50%;
+
+  background: #22c55e;
+
+  box-shadow: 0 0 0 3px #dcfce7;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+  .dashboard-page .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .dashboard-page .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-page .system-items {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .dashboard-page .system-item:nth-child(2) {
+    border-right: none;
+  }
+
+  .dashboard-page .system-item:nth-child(-n + 2) {
+    border-bottom: 1px solid #eef2f6;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  .dashboard-page {
+    padding: 22px 16px 30px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-actions {
+    width: 100%;
+  }
+
+  .period-selector {
+    flex: 1;
+  }
+
+  .refresh-button {
+    flex-shrink: 0;
+  }
+
+  .dashboard-page .system-items {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-page .system-item {
+    border-right: none;
+    border-bottom: 1px solid #eef2f6;
+  }
+
+  .dashboard-page .system-item:last-child {
+    border-bottom: none;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 520px) {
+
+  .dashboard-page {
+    padding: 18px 12px 25px;
+  }
+
+  .dashboard-page .dashboard-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-header h1 {
+    font-size: 25px;
+  }
+
+  .dashboard-header p {
+    font-size: 12px;
+  }
+
+  .dashboard-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .period-selector {
+    width: 100%;
+  }
+
+  .refresh-button {
+    width: 100%;
+  }
+
+  .dashboard-page .card-header {
+    padding: 17px;
+  }
+
+  .dashboard-page .payroll-progress-section {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .dashboard-page .overview-row {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .dashboard-page .leave-item {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .dashboard-page .system-item {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+}

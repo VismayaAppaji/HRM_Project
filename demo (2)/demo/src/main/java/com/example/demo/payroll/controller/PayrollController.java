@@ -1,0 +1,113 @@
+package com.example.demo.payroll.controller;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.demo.payroll.entity.Payroll;
+import com.example.demo.payroll.service.PayrollService;
+
+@RestController
+@RequestMapping("/api/payrolls")
+public class PayrollController {
+
+    private final PayrollService payrollService;
+
+    public PayrollController(PayrollService payrollService) {
+        this.payrollService = payrollService;
+    }
+
+    // Request body for generating payroll
+    public static class GeneratePayrollRequest {
+
+        private UUID employeeId;
+        private String payPeriod;
+
+        public UUID getEmployeeId() {
+            return employeeId;
+        }
+
+        public void setEmployeeId(UUID employeeId) {
+            this.employeeId = employeeId;
+        }
+
+        public String getPayPeriod() {
+            return payPeriod;
+        }
+
+        public void setPayPeriod(String payPeriod) {
+            this.payPeriod = payPeriod;
+        }
+    }
+
+    @PostMapping("/generate")
+    public ResponseEntity<Payroll> generatePayroll(
+            @RequestBody GeneratePayrollRequest request) {
+
+        if (request.getEmployeeId() == null) {
+            throw new RuntimeException("Employee ID is required");
+        }
+
+        if (request.getPayPeriod() == null ||
+                request.getPayPeriod().isBlank()) {
+            throw new RuntimeException("Pay period is required");
+        }
+
+        Payroll payroll = payrollService.generatePayroll(
+                request.getEmployeeId(),
+                request.getPayPeriod()
+        );
+
+        return new ResponseEntity<>(
+                payroll,
+                HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<Payroll>> getMyPayrolls(
+            Authentication authentication) {
+
+        String username = authentication.getName();
+
+        return ResponseEntity.ok(
+                payrollService.getMyPayrolls(username)
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Payroll> getPayrollById(
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(
+                payrollService.getPayrollById(id)
+        );
+    }
+
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<List<Payroll>> getPayrollsByEmployee(
+            @PathVariable UUID employeeId) {
+
+        return ResponseEntity.ok(
+                payrollService.getPayrollsByEmployee(employeeId)
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Payroll>> getAllPayrolls() {
+
+        return ResponseEntity.ok(
+                payrollService.getAllPayrolls()
+        );
+    }
+}

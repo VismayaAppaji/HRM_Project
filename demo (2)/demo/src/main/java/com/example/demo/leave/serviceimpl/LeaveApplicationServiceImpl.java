@@ -1,0 +1,174 @@
+package com.example.demo.leave.serviceimpl;
+
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.leave.entity.LeaveApplication;
+import com.example.demo.leave.entity.LeaveBalance;
+import com.example.demo.leave.repository.LeaveApplicationRepository;
+import com.example.demo.leave.repository.LeaveBalanceRepository;
+import com.example.demo.leave.service.LeaveApplicationService;
+
+@Service
+public class LeaveApplicationServiceImpl implements LeaveApplicationService {
+
+    private final LeaveApplicationRepository leaveApplicationRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+
+    public LeaveApplicationServiceImpl(
+            LeaveApplicationRepository leaveApplicationRepository,
+            LeaveBalanceRepository leaveBalanceRepository) {
+
+        this.leaveApplicationRepository = leaveApplicationRepository;
+        this.leaveBalanceRepository = leaveBalanceRepository;
+    }
+
+    @Override
+    public LeaveApplication applyLeave(
+            LeaveApplication leaveApplication) {
+
+        if (leaveApplication.getFromDate()
+                .isAfter(leaveApplication.getToDate())) {
+
+            throw new RuntimeException(
+                    "From date cannot be after to date");
+        }
+
+        long days = ChronoUnit.DAYS.between(
+                leaveApplication.getFromDate(),
+                leaveApplication.getToDate()) + 1;
+
+        leaveApplication.setNumberOfDays((int) days);
+        leaveApplication.setStatus("PENDING");
+
+        return leaveApplicationRepository.save(leaveApplication);
+    }
+
+    @Override
+    public List<LeaveApplication> getAllLeaves() {
+
+        return leaveApplicationRepository.findAll();
+    }
+
+    @Override
+    public LeaveApplication getLeaveById(UUID id) {
+
+        return leaveApplicationRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Leave application not found"));
+    }
+
+    @Override
+    public List<LeaveApplication> getLeavesByEmployee(
+            UUID employeeId) {
+
+        return leaveApplicationRepository
+                .findByEmployeeId(employeeId);
+    }
+
+    @Override
+    public List<LeaveApplication> getPendingLeaves() {
+
+        return leaveApplicationRepository
+                .findByStatus("PENDING");
+    }
+
+    @Override
+    public LeaveApplication approveLeave(UUID id) {
+
+        LeaveApplication leaveApplication =
+                getLeaveById(id);
+
+        if (!"PENDING".equals(leaveApplication.getStatus())) {
+
+            throw new RuntimeException(
+                    "Only pending leaves can be approved");
+        }
+
+        LeaveBalance leaveBalance =
+                leaveBalanceRepository
+                        .findByEmployeeId(
+                                leaveApplication.getEmployeeId())
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Leave balance not found for employee"));
+
+        int days = leaveApplication.getNumberOfDays();
+
+        String leaveType =
+                leaveApplication.getLeaveType().toUpperCase();
+
+        switch (leaveType) {
+
+            case "CASUAL":
+
+                if (leaveBalance.getCasualLeaveBalance() < days) {
+                    throw new RuntimeException(
+                            "Insufficient casual leave balance");
+                }
+
+                leaveBalance.setCasualLeaveBalance(
+                        leaveBalance.getCasualLeaveBalance() - days);
+
+                break;
+
+            case "SICK":
+
+                if (leaveBalance.getSickLeaveBalance() < days) {
+                    throw new RuntimeException(
+                            "Insufficient sick leave balance");
+                }
+
+                leaveBalance.setSickLeaveBalance(
+                        leaveBalance.getSickLeaveBalance() - days);
+
+                break;
+
+            case "EARNED":
+
+                if (leaveBalance.getEarnedLeaveBalance() < days) {
+                    throw new RuntimeException(
+                            "Insufficient earned leave balance");
+                }
+
+                leaveBalance.setEarnedLeaveBalance(
+                        leaveBalance.getEarnedLeaveBalance() - days);
+
+                break;
+
+            default:
+
+                throw new RuntimeException(
+                        "Invalid leave type. Use CASUAL, SICK or EARNED");
+        }
+
+        leaveBalanceRepository.save(leaveBalance);
+
+        leaveApplication.setStatus("APPROVED");
+
+        return leaveApplicationRepository.save(
+                leaveApplication);
+    }
+
+    @Override
+    public LeaveApplication rejectLeave(UUID id) {
+
+        LeaveApplication leaveApplication =
+                getLeaveById(id);
+
+        if (!"PENDING".equals(leaveApplication.getStatus())) {
+
+            throw new RuntimeException(
+                    "Only pending leaves can be rejected");
+        }
+
+        leaveApplication.setStatus("REJECTED");
+
+        return leaveApplicationRepository.save(
+                leaveApplication);
+    }
+}
