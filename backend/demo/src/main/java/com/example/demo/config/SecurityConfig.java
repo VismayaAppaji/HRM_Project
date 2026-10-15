@@ -27,9 +27,12 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter) {
-
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
+
+    // =========================
+    // AUTHENTICATION PROVIDER
+    // =========================
 
     @Bean
     public AuthenticationProvider authenticationProvider(
@@ -44,6 +47,10 @@ public class SecurityConfig {
         return provider;
     }
 
+    // =========================
+    // AUTHENTICATION MANAGER
+    // =========================
+
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration)
@@ -52,11 +59,14 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
+    // =========================
+    // CORS CONFIGURATION
+    // =========================
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration =
-                new CorsConfiguration();
+        CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(
                 List.of("http://localhost:5173")
@@ -90,6 +100,10 @@ public class SecurityConfig {
         return source;
     }
 
+    // =========================
+    // SECURITY FILTER CHAIN
+    // =========================
+
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -98,7 +112,7 @@ public class SecurityConfig {
 
         http
 
-            // Disable CSRF because this is a stateless REST API
+            // Disable CSRF for the stateless REST API
             .csrf(csrf -> csrf.disable())
 
             // Enable CORS
@@ -108,155 +122,107 @@ public class SecurityConfig {
                     )
             )
 
-            // JWT based authentication
+            // Use JWT-based authentication
             .sessionManagement(session ->
                     session.sessionCreationPolicy(
                             SessionCreationPolicy.STATELESS
                     )
             )
 
-            // Authentication provider
+            // Configure authentication provider
             .authenticationProvider(
                     authenticationProvider
             )
 
-            // Authorization rules
+            // =========================
+            // AUTHORIZATION RULES
+            // =========================
+
             .authorizeHttpRequests(auth -> auth
 
-                    // =========================
-                    // AUTHENTICATION
-                    // =========================
+                    // Root URL
+                    .requestMatchers("/").permitAll()
 
-                    // Login does not require JWT
+                    // Login endpoint
                     .requestMatchers(
                             "/api/auth/login"
                     ).permitAll()
-
 
                     // =========================
                     // EMPLOYEES
                     // =========================
 
-                    // HR and Employee can access their own profile
                     .requestMatchers(
                             "/api/employees/me"
                     ).hasAnyRole("HR", "EMPLOYEE")
 
-                    // Other employee APIs are HR only
                     .requestMatchers(
                             "/api/employees/**"
                     ).hasRole("HR")
-
 
                     // =========================
                     // SALARY
                     // =========================
 
-                    // Salary structure - HR only
                     .requestMatchers(
                             "/api/salary-structures/**"
                     ).hasRole("HR")
 
-                    // Employee salary - HR only
                     .requestMatchers(
                             "/api/employee-salaries/**"
                     ).hasRole("HR")
-
 
                     // =========================
                     // PAYROLL
                     // =========================
 
-                    // Employee can access their own payroll
                     .requestMatchers(
                             "/api/payrolls/me"
                     ).hasRole("EMPLOYEE")
 
-                    // Other payroll APIs are HR only
                     .requestMatchers(
                             "/api/payrolls/**"
                     ).hasRole("HR")
 
-
                     // =========================
-                    // LEAVE BALANCE
+                    // LEAVE BALANCES
                     // =========================
 
-                    // HR and Employee can access their
-                    // own leave balance endpoint
                     .requestMatchers(
                             "/api/leave-balances/me"
                     ).hasAnyRole("HR", "EMPLOYEE")
 
-                    // Employee-specific leave balance endpoints
-                    // are HR only
                     .requestMatchers(
                             "/api/leave-balances/**"
                     ).hasRole("HR")
-
 
                     // =========================
                     // DASHBOARD
                     // =========================
 
-                    // Dashboard - HR only
                     .requestMatchers(
                             "/api/dashboard/**"
                     ).hasRole("HR")
-
 
                     // =========================
                     // EMAIL
                     // =========================
 
-                    // Email logs - HR only
                     .requestMatchers(
                             "/api/email-logs/**"
                     ).hasRole("HR")
 
-                    // Email APIs - HR only
                     .requestMatchers(
                             "/api/emails/**"
                     ).hasRole("HR")
-
 
                     // =========================
                     // LEAVE APPLICATIONS
                     // =========================
 
-                    // Leave applications currently accessible
-                    // by both HR and Employee
                     .requestMatchers(
                             "/api/leave-applications/**"
                     ).hasAnyRole("HR", "EMPLOYEE")
 
-
                     // =========================
                     // PAYSLIPS
-                    // =========================
-
-                    // HR and Employee can access payslip endpoint.
-                    // Ownership is checked inside PayslipServiceImpl
-                    .requestMatchers(
-                            "/api/payslips/**"
-                    ).hasAnyRole("HR", "EMPLOYEE")
-
-
-                    // =========================
-                    // DEFAULT
-                    // =========================
-
-                    // Everything else requires authentication
-                    .anyRequest().authenticated()
-            )
-
-            // JWT filter must execute before
-            // username/password authentication
-            .addFilterBefore(
-                    jwtAuthenticationFilter,
-                    UsernamePasswordAuthenticationFilter.class
-            );
-
-        return http.build();
-    }
-}
