@@ -1,0 +1,58 @@
+package com.example.demo.payroll.controller;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.payroll.entity.Payroll;
+import com.example.demo.payroll.service.PayrollService;
+
+@RestController
+@RequestMapping("/api/payrolls")
+public class PayrollController {
+
+    private final PayrollService payrollService;
+
+    public PayrollController(PayrollService payrollService) {
+        this.payrollService = payrollService;
+    }
+
+    @PostMapping("/generate")
+    public ResponseEntity<Payroll> generatePayroll(
+            @RequestParam UUID employeeId,
+            @RequestParam String payPeriod) {
+
+        Payroll payroll =
+                payrollService.generatePayroll(employeeId, payPeriod);
+
+        return new ResponseEntity<>(
+                payroll,
+                HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Payroll> getPayrollById(
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(
+                payrollService.getPayrollById(id));
+    }
+
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<List<Payroll>> getPayrollsByEmployee(
+            @PathVariable UUID employeeId) {
+
+        return ResponseEntity.ok(
+                payrollService.getPayrollsByEmployee(employeeId));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Payroll>> getAllPayrolls() {
+
+        return ResponseEntity.ok(
+                payrollService.getAllPayrolls());
+    }
+}s

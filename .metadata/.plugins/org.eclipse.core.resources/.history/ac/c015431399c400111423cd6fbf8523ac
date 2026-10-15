@@ -1,0 +1,75 @@
+package com.example.demo.employee.serviceimpl;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.employee.entity.Employee;
+import com.example.demo.employee.repository.EmployeeRepository;
+import com.example.demo.employee.service.EmployeeService;
+
+@Service
+public class EmployeeServiceImpl implements EmployeeService {
+
+    private final EmployeeRepository employeeRepository;
+
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository) {
+        this.employeeRepository = employeeRepository;
+    }
+
+    @Override
+    public Employee createEmployee(Employee employee) {
+
+        if (employeeRepository.existsByEmployeeCode(employee.getEmployeeCode())) {
+            throw new RuntimeException("Employee code already exists");
+        }
+
+        if (employeeRepository.existsByEmail(employee.getEmail())) {
+            throw new RuntimeException("Employee email already exists");
+        }
+
+        return employeeRepository.save(employee);
+    }
+
+    @Override
+    public Employee getEmployeeById(UUID id) {
+
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+    }
+
+    @Override
+    public List<Employee> getAllEmployees() {
+
+        return employeeRepository.findAll();
+    }
+
+    @Override
+    public Employee updateEmployee(UUID id, Employee employee) {
+
+        Employee existingEmployee = employeeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        existingEmployee.setEmployeeCode(employee.getEmployeeCode());
+        existingEmployee.setFirstName(employee.getFirstName());
+        existingEmployee.setLastName(employee.getLastName());
+        existingEmployee.setEmail(employee.getEmail());
+        existingEmployee.setPhone(employee.getPhone());
+        existingEmployee.setDepartment(employee.getDepartment());
+        existingEmployee.setDesignation(employee.getDesignation());
+        existingEmployee.setJoiningDate(employee.getJoiningDate());
+        existingEmployee.setActive(employee.getActive());
+
+        return employeeRepository.save(existingEmployee);
+    }
+
+    @Override
+    public void deleteEmployee(UUID id) {
+
+        Employee existingEmployee = employeeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        employeeRepository.delete(existingEmployee);
+    }
+}

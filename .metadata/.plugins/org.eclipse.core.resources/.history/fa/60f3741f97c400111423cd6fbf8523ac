@@ -1,0 +1,5 @@
+package com.example.demp.employee.service;
+
+public interface EmployeeService {
+
+}

@@ -1,0 +1,12 @@
+package com.example.demo.payslip.service;
+
+import java.util.UUID;
+
+import org.springframework.security.core.Authentication;
+
+public interface PayslipService {
+
+    byte[] generatePayslipPdf(
+            UUID payrollId,
+            Authentication authentication);
+}

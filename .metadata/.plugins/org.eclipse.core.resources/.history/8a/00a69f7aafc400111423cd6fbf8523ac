@@ -1,0 +1,129 @@
+package com.example.demo.payroll.serviceimpl;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.leave.entity.LeaveBalance;
+import com.example.demo.leave.repository.LeaveBalanceRepository;
+import com.example.demo.payroll.entity.Payroll;
+import com.example.demo.payroll.repository.PayrollRepository;
+import com.example.demo.payroll.service.PayrollService;
+import com.example.demo.salary.entity.EmployeeSalary;
+import com.example.demo.salary.repository.EmployeeSalaryRepository;
+
+@Service
+public class PayrollServiceImpl implements PayrollService {
+
+    private final PayrollRepository payrollRepository;
+    private final EmployeeSalaryRepository employeeSalaryRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+
+    public PayrollServiceImpl(
+            PayrollRepository payrollRepository,
+            EmployeeSalaryRepository employeeSalaryRepository,
+            LeaveBalanceRepository leaveBalanceRepository) {
+
+        this.payrollRepository = payrollRepository;
+        this.employeeSalaryRepository = employeeSalaryRepository;
+        this.leaveBalanceRepository = leaveBalanceRepository;
+    }
+
+    @Override
+    public Payroll generatePayroll(UUID employeeId, String payPeriod) {
+
+        if (payrollRepository.existsByEmployeeIdAndPayPeriod(
+                employeeId, payPeriod)) {
+
+            throw new RuntimeException(
+                    "Payroll already generated for this employee and pay period");
+        }
+
+        EmployeeSalary employeeSalary =
+                employeeSalaryRepository
+                        .findByEmployeeIdAndActiveTrue(employeeId)
+                        .stream()
+                        .findFirst()
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Active salary not found for employee"));
+
+        LeaveBalance leaveBalance =
+                leaveBalanceRepository
+                        .findByEmployeeId(employeeId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Leave balance not found for employee"));
+
+        Payroll payroll = new Payroll();
+
+        payroll.setEmployeeId(employeeId);
+        payroll.setPayPeriod(payPeriod);
+
+        payroll.setBasicSalary(employeeSalary.getBasicSalary());
+        payroll.setHra(employeeSalary.getHra());
+        payroll.setSpecialAllowance(employeeSalary.getSpecialAllowance());
+        payroll.setGrossSalary(employeeSalary.getGrossSalary());
+
+        // Demo payroll deduction rules
+        BigDecimal pf =
+                employeeSalary.getBasicSalary()
+                        .multiply(new BigDecimal("0.12"));
+
+        BigDecimal esi =
+                BigDecimal.ZERO;
+
+        BigDecimal professionalTax =
+                new BigDecimal("200.00");
+
+        BigDecimal totalDeductions =
+                pf.add(esi).add(professionalTax);
+
+        BigDecimal netSalary =
+                employeeSalary.getGrossSalary()
+                        .subtract(totalDeductions);
+
+        payroll.setPf(pf);
+        payroll.setEsi(esi);
+        payroll.setProfessionalTax(professionalTax);
+        payroll.setTotalDeductions(totalDeductions);
+        payroll.setNetSalary(netSalary);
+
+        payroll.setCasualLeaveBalance(
+                leaveBalance.getCasualLeaveBalance());
+
+        payroll.setSickLeaveBalance(
+                leaveBalance.getSickLeaveBalance());
+
+        payroll.setEarnedLeaveBalance(
+                leaveBalance.getEarnedLeaveBalance());
+
+        payroll.setStatus("GENERATED");
+        payroll.setGeneratedAt(LocalDateTime.now());
+
+        return payrollRepository.save(payroll);
+    }
+
+    @Override
+    public Payroll getPayrollById(UUID id) {
+
+        return payrollRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Payroll not found"));
+    }
+
+    @Override
+    public List<Payroll> getPayrollsByEmployee(UUID employeeId) {
+
+        return payrollRepository.findByEmployeeId(employeeId);
+    }
+
+    @Override
+    public List<Payroll> getAllPayrolls() {
+
+        return payrollRepository.findAll();
+    }
+}

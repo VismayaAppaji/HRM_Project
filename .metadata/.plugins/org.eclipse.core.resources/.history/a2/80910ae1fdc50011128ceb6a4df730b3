@@ -1,0 +1,17 @@
+package com.example.demo.payroll.service;
+
+import java.util.List;
+import java.util.UUID;
+
+import com.example.demo.payroll.entity.Payroll;
+
+public interface PayrollService {
+
+    Payroll generatePayroll(UUID employeeId, String payPeriod);
+
+    Payroll getPayrollById(UUID id);
+
+    List<Payroll> getPayrollsByEmployee(UUID employeeId);
+
+    List<Payroll> getAllPayrolls();
+}

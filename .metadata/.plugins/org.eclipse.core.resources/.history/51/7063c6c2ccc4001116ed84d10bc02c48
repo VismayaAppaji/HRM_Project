@@ -1,0 +1,113 @@
+package com.example.demo.dashboard.serviceimpl;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.dashboard.dto.DashboardResponse;
+import com.example.demo.dashboard.dto.DashboardResponse.LeaveBalanceSummary;
+import com.example.demo.dashboard.service.DashboardService;
+import com.example.demo.email.entity.EmailDeliveryLog;
+import com.example.demo.email.repository.EmailDeliveryLogRepository;
+import com.example.demo.employee.entity.Employee;
+import com.example.demo.employee.repository.EmployeeRepository;
+import com.example.demo.leave.entity.LeaveBalance;
+import com.example.demo.leave.repository.LeaveBalanceRepository;
+import com.example.demo.payroll.entity.Payroll;
+import com.example.demo.payroll.repository.PayrollRepository;
+
+@Service
+public class DashboardServiceImpl implements DashboardService {
+
+    private final EmployeeRepository employeeRepository;
+    private final PayrollRepository payrollRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+    private final EmailDeliveryLogRepository emailDeliveryLogRepository;
+
+    public DashboardServiceImpl(
+            EmployeeRepository employeeRepository,
+            PayrollRepository payrollRepository,
+            LeaveBalanceRepository leaveBalanceRepository,
+            EmailDeliveryLogRepository emailDeliveryLogRepository) {
+
+        this.employeeRepository = employeeRepository;
+        this.payrollRepository = payrollRepository;
+        this.leaveBalanceRepository = leaveBalanceRepository;
+        this.emailDeliveryLogRepository = emailDeliveryLogRepository;
+    }
+
+    @Override
+    public DashboardResponse getDashboard(String payPeriod) {
+
+        List<Employee> employees = employeeRepository.findAll();
+
+        List<Payroll> payrolls = payrollRepository.findAll();
+
+        // Employees who already have payroll for the requested period
+        long totalEmployeesProcessed = payrolls.stream()
+                .filter(payroll -> payPeriod.equals(payroll.getPayPeriod()))
+                .map(Payroll::getEmployeeId)
+                .distinct()
+                .count();
+
+        // Active employees who do not yet have payroll
+        // for the requested period
+        long pendingPayroll = employees.stream()
+                .filter(employee -> Boolean.TRUE.equals(employee.getActive()))
+                .filter(employee -> payrolls.stream()
+                        .noneMatch(payroll ->
+                                employee.getId().equals(payroll.getEmployeeId())
+                                && payPeriod.equals(payroll.getPayPeriod())))
+                .count();
+
+        // Email delivery statistics
+        List<EmailDeliveryLog> emailLogs =
+                emailDeliveryLogRepository.findAll();
+
+        long payslipsSentSuccessfully = emailLogs.stream()
+                .filter(log -> "SENT".equalsIgnoreCase(log.getStatus()))
+                .count();
+
+        long failedEmailDeliveries = emailLogs.stream()
+                .filter(log -> "FAILED".equalsIgnoreCase(log.getStatus()))
+                .count();
+
+        // Leave balance summary
+        List<LeaveBalance> leaveBalances =
+                leaveBalanceRepository.findAll();
+
+        long totalCasualLeaveBalance = leaveBalances.stream()
+                .mapToLong(balance ->
+                        balance.getCasualLeaveBalance() == null
+                                ? 0
+                                : balance.getCasualLeaveBalance())
+                .sum();
+
+        long totalSickLeaveBalance = leaveBalances.stream()
+                .mapToLong(balance ->
+                        balance.getSickLeaveBalance() == null
+                                ? 0
+                                : balance.getSickLeaveBalance())
+                .sum();
+
+        long totalEarnedLeaveBalance = leaveBalances.stream()
+                .mapToLong(balance ->
+                        balance.getEarnedLeaveBalance() == null
+                                ? 0
+                                : balance.getEarnedLeaveBalance())
+                .sum();
+
+        LeaveBalanceSummary leaveBalanceSummary =
+                new LeaveBalanceSummary(
+                        totalCasualLeaveBalance,
+                        totalSickLeaveBalance,
+                        totalEarnedLeaveBalance);
+
+        return new DashboardResponse(
+                totalEmployeesProcessed,
+                pendingPayroll,
+                payslipsSentSuccessfully,
+                failedEmailDeliveries,
+                leaveBalanceSummary);
+    }
+}

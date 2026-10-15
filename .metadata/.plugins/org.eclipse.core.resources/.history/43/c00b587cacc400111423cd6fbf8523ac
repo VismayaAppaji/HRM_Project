@@ -1,0 +1,67 @@
+package com.example.demo.payroll.serviceimpl;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.leave.entity.LeaveBalance;
+import com.example.demo.leave.repository.LeaveBalanceRepository;
+import com.example.demo.payroll.entity.Payroll;
+import com.example.demo.payroll.repository.PayrollRepository;
+import com.example.demo.payroll.service.PayrollService;
+import com.example.demo.salary.entity.EmployeeSalary;
+import com.example.demo.salary.repository.EmployeeSalaryRepository;
+
+@Service
+public class PayrollServiceImpl implements PayrollService {
+
+    private final PayrollRepository payrollRepository;
+    private final EmployeeSalaryRepository employeeSalaryRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+
+    public PayrollServiceImpl(
+            PayrollRepository payrollRepository,
+            EmployeeSalaryRepository employeeSalaryRepository,
+            LeaveBalanceRepository leaveBalanceRepository) {
+
+        this.payrollRepository = payrollRepository;
+        this.employeeSalaryRepository = employeeSalaryRepository;
+        this.leaveBalanceRepository = leaveBalanceRepository;
+    }
+
+    @Override
+    public Payroll generatePayroll(UUID employeeId, String payPeriod) {
+
+        if (payrollRepository.existsByEmployeeIdAndPayPeriod(
+                employeeId, payPeriod)) {
+
+            throw new RuntimeException(
+                    "Payroll already generated for this employee and pay period");
+        }
+
+        // Payroll calculation logic will be added next.
+
+        return null;
+    }
+
+    @Override
+    public Payroll getPayrollById(UUID id) {
+
+        return payrollRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Payroll not found"));
+    }
+
+    @Override
+    public List<Payroll> getPayrollsByEmployee(UUID employeeId) {
+
+        return payrollRepository.findByEmployeeId(employeeId);
+    }
+
+    @Override
+    public List<Payroll> getAllPayrolls() {
+
+        return payrollRepository.findAll();
+    }
+}

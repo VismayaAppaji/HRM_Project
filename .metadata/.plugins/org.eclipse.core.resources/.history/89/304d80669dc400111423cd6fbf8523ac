@@ -1,0 +1,5 @@
+package com.example.demo.salary.repositry;
+
+public interface SalaryStructureRepository {
+
+}

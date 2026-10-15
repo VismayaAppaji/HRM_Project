@@ -1,0 +1,217 @@
+package com.example.demo.payslip.serviceimpl;
+
+import java.io.ByteArrayOutputStream;
+import java.util.UUID;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+
+import com.example.demo.auth.entity.AppUser;
+import com.example.demo.auth.repository.AppUserRepository;
+import com.example.demo.employee.entity.Employee;
+import com.example.demo.employee.repository.EmployeeRepository;
+import com.example.demo.payslip.service.PayslipService;
+import com.example.demo.payroll.entity.Payroll;
+import com.example.demo.payroll.repository.PayrollRepository;
+import com.lowagie.text.Document;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+
+@Service
+public class PayslipServiceImpl implements PayslipService {
+
+    private final PayrollRepository payrollRepository;
+    private final EmployeeRepository employeeRepository;
+    private final AppUserRepository appUserRepository;
+
+    public PayslipServiceImpl(
+            PayrollRepository payrollRepository,
+            EmployeeRepository employeeRepository,
+            AppUserRepository appUserRepository) {
+
+        this.payrollRepository = payrollRepository;
+        this.employeeRepository = employeeRepository;
+        this.appUserRepository = appUserRepository;
+    }
+
+    @Override
+    public byte[] generatePayslipPdf(
+            UUID payrollId,
+            Authentication authentication) {
+
+        Payroll payroll = payrollRepository.findById(payrollId)
+                .orElseThrow(() ->
+                        new RuntimeException("Payroll not found"));
+
+        String username = authentication.getName();
+
+        AppUser appUser = appUserRepository
+                .findByUsername(username)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        String role = appUser.getRole();
+
+        /*
+         * HR can download any employee's payslip.
+         * Employee can download only their own payslip.
+         */
+        if ("EMPLOYEE".equalsIgnoreCase(role)) {
+
+            if (appUser.getEmployeeId() == null) {
+                throw new RuntimeException(
+                        "No employee is linked to this user");
+            }
+
+            if (!appUser.getEmployeeId()
+                    .equals(payroll.getEmployeeId())) {
+
+                throw new RuntimeException(
+                        "You are not authorized to access this payslip");
+            }
+        }
+
+        Employee employee = employeeRepository
+                .findById(payroll.getEmployeeId())
+                .orElseThrow(() ->
+                        new RuntimeException("Employee not found"));
+
+        try {
+
+            ByteArrayOutputStream outputStream =
+                    new ByteArrayOutputStream();
+
+            Document document = new Document();
+
+            PdfWriter.getInstance(document, outputStream);
+
+            document.open();
+
+            // Title
+            document.add(new Paragraph("HRM PAYSLIP"));
+
+            document.add(new Paragraph(
+                    "Pay Period: " + payroll.getPayPeriod()));
+
+            document.add(new Paragraph(" "));
+
+            // Employee Details
+            document.add(new Paragraph("EMPLOYEE DETAILS"));
+
+            PdfPTable employeeTable = new PdfPTable(2);
+
+            employeeTable.addCell("Employee ID");
+            employeeTable.addCell(
+                    employee.getEmployeeCode());
+
+            employeeTable.addCell("Employee Name");
+            employeeTable.addCell(
+                    employee.getFirstName() + " "
+                    + (employee.getLastName() == null
+                    ? ""
+                    : employee.getLastName()));
+
+            employeeTable.addCell("Department");
+            employeeTable.addCell(
+                    employee.getDepartment() == null
+                    ? ""
+                    : employee.getDepartment());
+
+            employeeTable.addCell("Designation");
+            employeeTable.addCell(
+                    employee.getDesignation() == null
+                    ? ""
+                    : employee.getDesignation());
+
+            document.add(employeeTable);
+
+            document.add(new Paragraph(" "));
+
+            // Earnings
+            document.add(new Paragraph("EARNINGS"));
+
+            PdfPTable earningsTable = new PdfPTable(2);
+
+            earningsTable.addCell("Basic Salary");
+            earningsTable.addCell(
+                    payroll.getBasicSalary().toString());
+
+            earningsTable.addCell("HRA");
+            earningsTable.addCell(
+                    payroll.getHra().toString());
+
+            earningsTable.addCell("Special Allowance");
+            earningsTable.addCell(
+                    payroll.getSpecialAllowance().toString());
+
+            earningsTable.addCell("Gross Salary");
+            earningsTable.addCell(
+                    payroll.getGrossSalary().toString());
+
+            document.add(earningsTable);
+
+            document.add(new Paragraph(" "));
+
+            // Deductions
+            document.add(new Paragraph("DEDUCTIONS"));
+
+            PdfPTable deductionTable = new PdfPTable(2);
+
+            deductionTable.addCell("PF");
+            deductionTable.addCell(
+                    payroll.getPf().toString());
+
+            deductionTable.addCell("ESI");
+            deductionTable.addCell(
+                    payroll.getEsi().toString());
+
+            deductionTable.addCell("Professional Tax");
+            deductionTable.addCell(
+                    payroll.getProfessionalTax().toString());
+
+            deductionTable.addCell("Total Deductions");
+            deductionTable.addCell(
+                    payroll.getTotalDeductions().toString());
+
+            document.add(deductionTable);
+
+            document.add(new Paragraph(" "));
+
+            // Leave Balance
+            document.add(new Paragraph("LEAVE BALANCE"));
+
+            PdfPTable leaveTable = new PdfPTable(2);
+
+            leaveTable.addCell("Casual Leave");
+            leaveTable.addCell(
+                    payroll.getCasualLeaveBalance().toString());
+
+            leaveTable.addCell("Sick Leave");
+            leaveTable.addCell(
+                    payroll.getSickLeaveBalance().toString());
+
+            leaveTable.addCell("Earned Leave");
+            leaveTable.addCell(
+                    payroll.getEarnedLeaveBalance().toString());
+
+            document.add(leaveTable);
+
+            document.add(new Paragraph(" "));
+
+            // Net Salary
+            document.add(new Paragraph(
+                    "NET SALARY: ₹"
+                    + payroll.getNetSalary()));
+
+            document.close();
+
+            return outputStream.toByteArray();
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Failed to generate payslip PDF", e);
+        }
+    }
+}

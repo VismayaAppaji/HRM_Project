@@ -1,0 +1,114 @@
+package com.example.demo.dashboard.dto;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public class DashboardResponse {
+
+    private long totalEmployeesProcessed;
+    private long pendingPayroll;
+    private long payslipsSentSuccessfully;
+    private long failedEmailDeliveries;
+    private LeaveBalanceSummary leaveBalanceSummary;
+
+    public DashboardResponse() {
+    }
+
+    public DashboardResponse(
+            long totalEmployeesProcessed,
+            long pendingPayroll,
+            long payslipsSentSuccessfully,
+            long failedEmailDeliveries,
+            LeaveBalanceSummary leaveBalanceSummary) {
+
+        this.totalEmployeesProcessed = totalEmployeesProcessed;
+        this.pendingPayroll = pendingPayroll;
+        this.payslipsSentSuccessfully = payslipsSentSuccessfully;
+        this.failedEmailDeliveries = failedEmailDeliveries;
+        this.leaveBalanceSummary = leaveBalanceSummary;
+    }
+
+    public long getTotalEmployeesProcessed() {
+        return totalEmployeesProcessed;
+    }
+
+    public void setTotalEmployeesProcessed(long totalEmployeesProcessed) {
+        this.totalEmployeesProcessed = totalEmployeesProcessed;
+    }
+
+    public long getPendingPayroll() {
+        return pendingPayroll;
+    }
+
+    public void setPendingPayroll(long pendingPayroll) {
+        this.pendingPayroll = pendingPayroll;
+    }
+
+    public long getPayslipsSentSuccessfully() {
+        return payslipsSentSuccessfully;
+    }
+
+    public void setPayslipsSentSuccessfully(long payslipsSentSuccessfully) {
+        this.payslipsSentSuccessfully = payslipsSentSuccessfully;
+    }
+
+    public long getFailedEmailDeliveries() {
+        return failedEmailDeliveries;
+    }
+
+    public void setFailedEmailDeliveries(long failedEmailDeliveries) {
+        this.failedEmailDeliveries = failedEmailDeliveries;
+    }
+
+    public LeaveBalanceSummary getLeaveBalanceSummary() {
+        return leaveBalanceSummary;
+    }
+
+    public void setLeaveBalanceSummary(LeaveBalanceSummary leaveBalanceSummary) {
+        this.leaveBalanceSummary = leaveBalanceSummary;
+    }
+
+    public static class LeaveBalanceSummary {
+
+        private BigDecimal totalCasualLeaveBalance;
+        private BigDecimal totalSickLeaveBalance;
+        private BigDecimal totalEarnedLeaveBalance;
+
+        public LeaveBalanceSummary() {
+        }
+
+        public LeaveBalanceSummary(
+                BigDecimal totalCasualLeaveBalance,
+                BigDecimal totalSickLeaveBalance,
+                BigDecimal totalEarnedLeaveBalance) {
+
+            this.totalCasualLeaveBalance = totalCasualLeaveBalance;
+            this.totalSickLeaveBalance = totalSickLeaveBalance;
+            this.totalEarnedLeaveBalance = totalEarnedLeaveBalance;
+        }
+
+        public BigDecimal getTotalCasualLeaveBalance() {
+            return totalCasualLeaveBalance;
+        }
+
+        public void setTotalCasualLeaveBalance(BigDecimal totalCasualLeaveBalance) {
+            this.totalCasualLeaveBalance = totalCasualLeaveBalance;
+        }
+
+        public BigDecimal getTotalSickLeaveBalance() {
+            return totalSickLeaveBalance;
+        }
+
+        public void setTotalSickLeaveBalance(BigDecimal totalSickLeaveBalance) {
+            this.totalSickLeaveBalance = totalSickLeaveBalance;
+        }
+
+        public BigDecimal getTotalEarnedLeaveBalance() {
+            return totalEarnedLeaveBalance;
+        }
+
+        public void setTotalEarnedLeaveBalance(BigDecimal totalEarnedLeaveBalance) {
+            this.totalEarnedLeaveBalance = totalEarnedLeaveBalance;
+        }
+    }
+}

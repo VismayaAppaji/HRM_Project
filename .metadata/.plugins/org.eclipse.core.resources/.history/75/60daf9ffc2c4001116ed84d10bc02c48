@@ -1,0 +1,12 @@
+package com.example.demo.email.service;
+
+import java.util.UUID;
+
+public interface EmailService {
+
+    void sendPayslipEmail(
+            UUID employeeId,
+            String employeeEmail,
+            String payPeriod,
+            byte[] payslipPdf);
+}

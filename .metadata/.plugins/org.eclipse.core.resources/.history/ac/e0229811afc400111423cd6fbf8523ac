@@ -1,0 +1,179 @@
+package com.example.demo.payroll.serviceimpl;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.leave.entity.LeaveBalance;
+import com.example.demo.leave.repository.LeaveBalanceRepository;
+import com.example.demo.payroll.entity.Payroll;
+import com.example.demo.payroll.repository.PayrollRepository;
+import com.example.demo.payroll.service.PayrollService;
+import com.example.demo.salary.entity.EmployeeSalary;
+import com.example.demo.salary.repository.EmployeeSalaryRepository;
+
+@Service
+public class PayrollServiceImpl implements PayrollService {
+
+    private final PayrollRepository payrollRepository;
+    private final EmployeeSalaryRepository employeeSalaryRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+
+    public PayrollServiceImpl(
+            PayrollRepository payrollRepository,
+            EmployeeSalaryRepository employeeSalaryRepository,
+            LeaveBalanceRepository leaveBalanceRepository) {
+
+        this.payrollRepository = payrollRepository;
+        this.employeeSalaryRepository = employeeSalaryRepository;
+        this.leaveBalanceRepository = leaveBalanceRepository;
+    }
+
+    @Override
+    public Payroll generatePayroll(UUID employeeId, String payPeriod) {
+    	Payroll payroll = payrollRepository.findById(payrollId)
+                .orElseThrow(() ->
+                        new RuntimeException("Payroll not found"));
+
+        try {
+
+            ByteArrayOutputStream outputStream =
+                    new ByteArrayOutputStream();
+
+            Document document = new Document();
+
+            PdfWriter.getInstance(document, outputStream);
+
+            document.open();
+
+            // Title
+            Paragraph title =
+                    new Paragraph("HRM PAYSLIP");
+
+            document.add(title);
+
+            document.add(
+                    new Paragraph("Pay Period: "
+                            + payroll.getPayPeriod()));
+
+            document.add(
+                    new Paragraph("Employee ID: "
+                            + payroll.getEmployeeId()));
+
+            document.add(
+                    new Paragraph(" "));
+
+            // Earnings
+            document.add(
+                    new Paragraph("EARNINGS"));
+
+            Table earningsTable =
+                    new Table(2);
+
+            earningsTable.addCell("Basic Salary");
+            earningsTable.addCell(
+                    payroll.getBasicSalary().toString());
+
+            earningsTable.addCell("HRA");
+            earningsTable.addCell(
+                    payroll.getHra().toString());
+
+            earningsTable.addCell("Special Allowance");
+            earningsTable.addCell(
+                    payroll.getSpecialAllowance().toString());
+
+            earningsTable.addCell("Gross Salary");
+            earningsTable.addCell(
+                    payroll.getGrossSalary().toString());
+
+            document.add(earningsTable);
+
+            document.add(
+                    new Paragraph(" "));
+
+            // Deductions
+            document.add(
+                    new Paragraph("DEDUCTIONS"));
+
+            Table deductionTable =
+                    new Table(2);
+
+            deductionTable.addCell("PF");
+            deductionTable.addCell(
+                    payroll.getPf().toString());
+
+            deductionTable.addCell("ESI");
+            deductionTable.addCell(
+                    payroll.getEsi().toString());
+
+            deductionTable.addCell("Professional Tax");
+            deductionTable.addCell(
+                    payroll.getProfessionalTax().toString());
+
+            deductionTable.addCell("Total Deductions");
+            deductionTable.addCell(
+                    payroll.getTotalDeductions().toString());
+
+            document.add(deductionTable);
+
+            document.add(
+                    new Paragraph(" "));
+
+            // Leave balance
+            document.add(
+                    new Paragraph("LEAVE BALANCE"));
+
+            Table leaveTable =
+                    new Table(2);
+
+            leaveTable.addCell("Casual Leave");
+            leaveTable.addCell(
+                    payroll.getCasualLeaveBalance().toString());
+
+            leaveTable.addCell("Sick Leave");
+            leaveTable.addCell(
+                    payroll.getSickLeaveBalance().toString());
+
+            leaveTable.addCell("Earned Leave");
+            leaveTable.addCell(
+                    payroll.getEarnedLeaveBalance().toString());
+
+            document.add(leaveTable);
+
+            document.add(
+                    new Paragraph(" "));
+
+            // Net Salary
+            Paragraph netSalary =
+                    new Paragraph(
+                            "NET SALARY: ₹"
+                                    + payroll.getNetSalary());
+
+            document.add(netSalary);
+
+            document.close();
+
+            return outputStream.toByteArray();
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Failed to generate payslip PDF", e);
+        }
+    }
+    
+    
+
+	@Override
+	public Payroll getPayrollById(UUID id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Payroll> getPayrollsByEmployee(UUID employeeId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}

@@ -1,0 +1,97 @@
+package com.example.demo.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.example.demo.auth.security.JwtAuthenticationFilter;
+
+@Configuration
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter) {
+
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider(
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
+
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider(userDetailsService);
+
+        provider.setPasswordEncoder(passwordEncoder);
+
+        return provider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration)
+            throws Exception {
+
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+    		 HttpSecurity http,
+    	        AuthenticationProvider authenticationProvider)
+    	        throws Exception {
+
+    	    http
+    	        .csrf(csrf -> csrf.disable())
+
+    	        .sessionManagement(session ->
+    	            session.sessionCreationPolicy(
+    	                SessionCreationPolicy.STATELESS))
+
+    	        .authenticationProvider(authenticationProvider)
+
+    	        .authorizeHttpRequests(auth -> auth
+
+    	            // Login is public
+    	            .requestMatchers("/api/auth/login").permitAll()
+
+    	            // HR-only APIs
+    	            .requestMatchers("/api/employees/**").hasRole("HR")
+    	            .requestMatchers("/api/salary-structures/**").hasRole("HR")
+    	            .requestMatchers("/api/employee-salaries/**").hasRole("HR")
+    	            .requestMatchers("/api/payroll/**").hasRole("HR")
+    	            .requestMatchers("/api/dashboard/**").hasRole("HR")
+    	            .requestMatchers("/api/email-logs/**").hasRole("HR")
+    	            .requestMatchers("/api/emails/**").hasRole("HR")
+
+    	            // Both HR and Employee
+    	            .requestMatchers("/api/leave-applications/**")
+    	                .hasAnyRole("HR", "EMPLOYEE")
+
+    	            .requestMatchers("/api/payslips/**")
+    	                .hasAnyRole("HR", "EMPLOYEE")
+
+    	            // Everything else requires authentication
+    	            .anyRequest().authenticated()
+    	        )
+
+    	        .addFilterBefore(
+    	            jwtAuthenticationFilter,
+    	            UsernamePasswordAuthenticationFilter.class
+    	        );
+
+    	    return http.build();
+    }
+}

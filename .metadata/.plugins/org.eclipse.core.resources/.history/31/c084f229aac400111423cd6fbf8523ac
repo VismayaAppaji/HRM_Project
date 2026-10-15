@@ -1,0 +1,104 @@
+package com.example.demo.leave.serviceimpl;
+
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.leave.entity.LeaveApplication;
+import com.example.demo.leave.repository.LeaveApplicationRepository;
+import com.example.demo.leave.service.LeaveApplicationService;
+
+@Service
+public class LeaveApplicationServiceImpl implements LeaveApplicationService {
+
+    private final LeaveApplicationRepository leaveApplicationRepository;
+
+    public LeaveApplicationServiceImpl(
+            LeaveApplicationRepository leaveApplicationRepository) {
+
+        this.leaveApplicationRepository = leaveApplicationRepository;
+    }
+
+    @Override
+    public LeaveApplication applyLeave(
+            LeaveApplication leaveApplication) {
+
+        if (leaveApplication.getFromDate()
+                .isAfter(leaveApplication.getToDate())) {
+
+            throw new RuntimeException(
+                    "From date cannot be after to date");
+        }
+
+        long days = ChronoUnit.DAYS.between(
+                leaveApplication.getFromDate(),
+                leaveApplication.getToDate()) + 1;
+
+        leaveApplication.setNumberOfDays((int) days);
+        leaveApplication.setStatus("PENDING");
+
+        return leaveApplicationRepository.save(leaveApplication);
+    }
+
+    @Override
+    public LeaveApplication getLeaveById(UUID id) {
+
+        return leaveApplicationRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Leave application not found"));
+    }
+
+    @Override
+    public List<LeaveApplication> getLeavesByEmployee(
+            UUID employeeId) {
+
+        return leaveApplicationRepository
+                .findByEmployeeId(employeeId);
+    }
+
+    @Override
+    public List<LeaveApplication> getPendingLeaves() {
+
+        return leaveApplicationRepository
+                .findByStatus("PENDING");
+    }
+
+    @Override
+    public LeaveApplication approveLeave(UUID id) {
+
+        LeaveApplication leaveApplication =
+                getLeaveById(id);
+
+        if (!"PENDING".equals(leaveApplication.getStatus())) {
+
+            throw new RuntimeException(
+                    "Only pending leaves can be approved");
+        }
+
+        leaveApplication.setStatus("APPROVED");
+
+        return leaveApplicationRepository.save(
+                leaveApplication);
+    }
+
+    @Override
+    public LeaveApplication rejectLeave(UUID id) {
+
+        LeaveApplication leaveApplication =
+                getLeaveById(id);
+
+        if (!"PENDING".equals(leaveApplication.getStatus())) {
+
+            throw new RuntimeException(
+                    "Only pending leaves can be rejected");
+        }
+
+        leaveApplication.setStatus("REJECTED");
+
+        return leaveApplicationRepository.save(
+                leaveApplication);
+    }
+}

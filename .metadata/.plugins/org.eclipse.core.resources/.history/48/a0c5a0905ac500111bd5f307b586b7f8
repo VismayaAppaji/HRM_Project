@@ -1,0 +1,75 @@
+package com.example.demo.leave.controller;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.leave.entity.LeaveApplication;
+import com.example.demo.leave.service.LeaveApplicationService;
+
+@RestController
+@RequestMapping("/api/leave-applications")
+public class LeaveApplicationController {
+
+    private final LeaveApplicationService leaveApplicationService;
+
+    public LeaveApplicationController(
+            LeaveApplicationService leaveApplicationService) {
+
+        this.leaveApplicationService = leaveApplicationService;
+    }
+
+    @PostMapping
+    public ResponseEntity<LeaveApplication> applyLeave(
+            @RequestBody LeaveApplication leaveApplication) {
+
+        LeaveApplication created =
+                leaveApplicationService.applyLeave(leaveApplication);
+
+        return new ResponseEntity<>(
+                created, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<LeaveApplication> getLeaveById(
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(
+                leaveApplicationService.getLeaveById(id));
+    }
+
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<List<LeaveApplication>> getLeavesByEmployee(
+            @PathVariable UUID employeeId) {
+
+        return ResponseEntity.ok(
+                leaveApplicationService
+                        .getLeavesByEmployee(employeeId));
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<List<LeaveApplication>> getPendingLeaves() {
+
+        return ResponseEntity.ok(
+                leaveApplicationService.getPendingLeaves());
+    }
+
+    @PutMapping("/{id}/approve")
+    public ResponseEntity<LeaveApplication> approveLeave(
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(
+                leaveApplicationService.approveLeave(id));
+    }
+
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<LeaveApplication> rejectLeave(
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(
+                leaveApplicationService.rejectLeave(id));
+    }
+}

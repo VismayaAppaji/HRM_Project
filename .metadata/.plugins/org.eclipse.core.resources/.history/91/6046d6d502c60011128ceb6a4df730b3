@@ -1,0 +1,16 @@
+package com.example.demo.leave.service;
+
+import java.util.UUID;
+
+import com.example.demo.leave.entity.LeaveBalance;
+
+public interface LeaveBalanceService {
+
+    LeaveBalance createLeaveBalance(UUID employeeId);
+
+    LeaveBalance getLeaveBalance(UUID employeeId);
+
+    LeaveBalance updateLeaveBalance(
+            UUID employeeId,
+            LeaveBalance leaveBalance);
+}

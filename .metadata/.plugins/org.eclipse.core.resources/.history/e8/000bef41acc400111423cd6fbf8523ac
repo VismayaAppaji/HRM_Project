@@ -1,0 +1,55 @@
+package com.example.demo.payroll.serviceimpl;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.payroll.entity.Payroll;
+import com.example.demo.payroll.repository.PayrollRepository;
+import com.example.demo.payroll.service.PayrollService;
+
+@Service
+public class PayrollServiceImpl implements PayrollService {
+
+    private final PayrollRepository payrollRepository;
+
+    public PayrollServiceImpl(PayrollRepository payrollRepository) {
+        this.payrollRepository = payrollRepository;
+    }
+
+    @Override
+    public Payroll generatePayroll(UUID employeeId, String payPeriod) {
+
+        if (payrollRepository.existsByEmployeeIdAndPayPeriod(
+                employeeId, payPeriod)) {
+
+            throw new RuntimeException(
+                    "Payroll already generated for this employee and pay period");
+        }
+
+        // Payroll calculation logic will be added next.
+
+        return null;
+    }
+
+    @Override
+    public Payroll getPayrollById(UUID id) {
+
+        return payrollRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Payroll not found"));
+    }
+
+    @Override
+    public List<Payroll> getPayrollsByEmployee(UUID employeeId) {
+
+        return payrollRepository.findByEmployeeId(employeeId);
+    }
+
+    @Override
+    public List<Payroll> getAllPayrolls() {
+
+        return payrollRepository.findAll();
+    }
+}

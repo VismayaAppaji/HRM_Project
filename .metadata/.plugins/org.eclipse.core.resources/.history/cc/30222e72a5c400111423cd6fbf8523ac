@@ -1,0 +1,5 @@
+package com.example.demo.leave.service;
+
+public interface LeaveBalanceService {
+
+}
