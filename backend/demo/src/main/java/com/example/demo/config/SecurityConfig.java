@@ -140,10 +140,10 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                    // Root URL
+                    // Allow access to the root URL
                     .requestMatchers("/").permitAll()
 
-                    // Login endpoint
+                    // Allow login without authentication
                     .requestMatchers(
                             "/api/auth/login"
                     ).permitAll()
@@ -226,3 +226,26 @@ public class SecurityConfig {
 
                     // =========================
                     // PAYSLIPS
+                    // =========================
+
+                    .requestMatchers(
+                            "/api/payslips/**"
+                    ).hasAnyRole("HR", "EMPLOYEE")
+
+                    // =========================
+                    // ALL OTHER ENDPOINTS
+                    // =========================
+
+                    // Require authentication by default
+                    .anyRequest().authenticated()
+            );
+
+        // Add JWT authentication filter
+        http.addFilterBefore(
+                jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class
+        );
+
+        return http.build();
+    }
+}
