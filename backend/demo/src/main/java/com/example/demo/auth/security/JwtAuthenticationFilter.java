@@ -32,6 +32,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+
+        String path = request.getServletPath();
+
+        return "/".equals(path)
+                || "/api/auth/login".equals(path);
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -73,8 +82,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            // Invalid or expired JWT.
-            // The request will continue without authentication.
+            // Invalid or expired tokens do not authenticate the request.
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
