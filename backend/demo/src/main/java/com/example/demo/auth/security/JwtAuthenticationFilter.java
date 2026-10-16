@@ -36,8 +36,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
+        // Do not run JWT authentication for:
+        // 1. Root endpoint
+        // 2. Login endpoint
+        // 3. CORS preflight requests
+
         return "/".equals(path)
-                || "/api/auth/login".equals(path);
+                || "/api/auth/login".equals(path)
+                || "OPTIONS".equalsIgnoreCase(request.getMethod());
     }
 
     @Override
@@ -49,6 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
+        // No JWT token -> continue normally
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -57,6 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
+
             String username = jwtService.extractUsername(token);
 
             if (username != null
@@ -71,18 +79,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
-                                userDetails.getAuthorities());
+                                userDetails.getAuthorities()
+                        );
 
                 authentication.setDetails(
                         new WebAuthenticationDetailsSource()
-                                .buildDetails(request));
+                                .buildDetails(request)
+                );
 
                 SecurityContextHolder.getContext()
                         .setAuthentication(authentication);
             }
 
         } catch (Exception e) {
-            // Invalid or expired tokens do not authenticate the request.
+
+            // Invalid or expired token
             SecurityContextHolder.clearContext();
         }
 
