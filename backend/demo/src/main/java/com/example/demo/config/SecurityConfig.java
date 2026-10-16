@@ -148,32 +148,50 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                    // Root
-                    .requestMatchers("/").permitAll()
+                    // =========================
+                    // ROOT
+                    // =========================
 
-                    // IMPORTANT:
-                    // Allow browser CORS preflight requests
+                    .requestMatchers("/")
+                    .permitAll()
+
+                    // =========================
+                    // CORS PREFLIGHT
+                    // =========================
+
                     .requestMatchers(
                             HttpMethod.OPTIONS,
                             "/**"
-                    ).permitAll()
+                    )
+                    .permitAll()
 
-                    // Login
+                    // =========================
+                    // LOGIN
+                    // =========================
+
                     .requestMatchers(
                             "/api/auth/login"
-                    ).permitAll()
+                    )
+                    .permitAll()
 
                     // =========================
                     // EMPLOYEES
                     // =========================
 
+                    // Employee can access their own profile
                     .requestMatchers(
                             "/api/employees/me"
-                    ).hasAnyRole("HR", "EMPLOYEE")
+                    )
+                    .hasAnyRole(
+                            "HR",
+                            "EMPLOYEE"
+                    )
 
+                    // Only HR can access employee management APIs
                     .requestMatchers(
                             "/api/employees/**"
-                    ).hasRole("HR")
+                    )
+                    .hasRole("HR")
 
                     // =========================
                     // SALARY
@@ -181,85 +199,20 @@ public class SecurityConfig {
 
                     .requestMatchers(
                             "/api/salary-structures/**"
-                    ).hasRole("HR")
+                    )
+                    .hasRole("HR")
 
                     .requestMatchers(
                             "/api/employee-salaries/**"
-                    ).hasRole("HR")
+                    )
+                    .hasRole("HR")
 
                     // =========================
                     // PAYROLL
                     // =========================
 
+                    // Employee can access their own payroll
                     .requestMatchers(
                             "/api/payrolls/me"
-                    ).hasRole("EMPLOYEE")
-
-                    .requestMatchers(
-                            "/api/payrolls/**"
-                    ).hasRole("HR")
-
-                    // =========================
-                    // LEAVE BALANCES
-                    // =========================
-
-                    .requestMatchers(
-                            "/api/leave-balances/me"
-                    ).hasAnyRole("HR", "EMPLOYEE")
-
-                    .requestMatchers(
-                            "/api/leave-balances/**"
-                    ).hasRole("HR")
-
-                    // =========================
-                    // DASHBOARD
-                    // =========================
-
-                    .requestMatchers(
-                            "/api/dashboard/**"
-                    ).hasRole("HR")
-
-                    // =========================
-                    // EMAIL
-                    // =========================
-
-                    .requestMatchers(
-                            "/api/email-logs/**"
-                    ).hasRole("HR")
-
-                    .requestMatchers(
-                            "/api/emails/**"
-                    ).hasRole("HR")
-
-                    // =========================
-                    // LEAVE APPLICATIONS
-                    // =========================
-
-                    .requestMatchers(
-                            "/api/leave-applications/**"
-                    ).hasAnyRole("HR", "EMPLOYEE")
-
-                    // =========================
-                    // PAYSLIPS
-                    // =========================
-
-                    .requestMatchers(
-                            "/api/payslips/**"
-                    ).hasAnyRole("HR", "EMPLOYEE")
-
-                    // =========================
-                    // EVERYTHING ELSE
-                    // =========================
-
-                    .anyRequest().authenticated()
-            );
-
-        // JWT authentication filter
-        http.addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class
-        );
-
-        return http.build();
-    }
-}
+                    )
+                    .hasRole("
