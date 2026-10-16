@@ -32,6 +32,13 @@ public class CustomUserDetailsService implements UserDetailsService {
                     "User account is inactive: " + username);
         }
 
+        // Temporary debugging information
+        System.out.println(
+                "LOGIN USER = " + appUser.getUsername()
+                + " | ROLE = " + appUser.getRole()
+                + " | ACTIVE = " + appUser.getActive()
+        );
+
         return User.builder()
                 .username(appUser.getUsername())
                 .password(appUser.getPassword())
