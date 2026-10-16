@@ -36,11 +36,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // Do not run JWT authentication for:
-        // 1. Root endpoint
-        // 2. Login endpoint
-        // 3. CORS preflight requests
-
         return "/".equals(path)
                 || "/api/auth/login".equals(path)
                 || "OPTIONS".equalsIgnoreCase(request.getMethod());
@@ -53,10 +48,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
+        String requestPath = request.getRequestURI();
+
+        System.out.println(
+                "===== JWT FILTER START ====="
+        );
+
+        System.out.println(
+                "REQUEST = " + request.getMethod() + " " + requestPath
+        );
+
         String authHeader = request.getHeader("Authorization");
 
-        // No JWT token -> continue normally
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null) {
+
+            System.out.println(
+                    "JWT STATUS = Authorization header is NULL"
+            );
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (!authHeader.startsWith("Bearer ")) {
+
+            System.out.println(
+                    "JWT STATUS = Authorization header is not Bearer"
+            );
+
             filterChain.doFilter(request, response);
             return;
         }
@@ -65,37 +84,119 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
 
+            System.out.println(
+                    "JWT STATUS = Bearer token received"
+            );
+
+            /*
+             * Step 1: Extract username
+             */
             String username = jwtService.extractUsername(token);
 
-            if (username != null
-                    && SecurityContextHolder.getContext()
-                            .getAuthentication() == null
-                    && jwtService.isTokenValid(token)) {
+            System.out.println(
+                    "JWT USERNAME = " + username
+            );
 
-                UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(username);
+            /*
+             * Step 2: Validate token
+             */
+            boolean validToken = jwtService.isTokenValid(token);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+            System.out.println(
+                    "JWT VALID = " + validToken
+            );
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
+            if (!validToken) {
+
+                System.out.println(
+                        "JWT STATUS = TOKEN INVALID OR EXPIRED"
                 );
 
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authentication);
+                SecurityContextHolder.clearContext();
+
+                filterChain.doFilter(request, response);
+                return;
             }
+
+            /*
+             * Step 3: Check whether authentication already exists
+             */
+            if (SecurityContextHolder.getContext()
+                    .getAuthentication() != null) {
+
+                System.out.println(
+                        "JWT STATUS = Authentication already exists"
+                );
+
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            /*
+             * Step 4: Load user from database
+             */
+            UserDetails userDetails =
+                    userDetailsService.loadUserByUsername(username);
+
+            System.out.println(
+                    "SPRING USER = " + userDetails.getUsername()
+            );
+
+            System.out.println(
+                    "SPRING AUTHORITIES = "
+                            + userDetails.getAuthorities()
+            );
+
+            /*
+             * Step 5: Create authentication
+             */
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource()
+                            .buildDetails(request)
+            );
+
+            /*
+             * Step 6: Put authentication into SecurityContext
+             */
+            SecurityContextHolder.getContext()
+                    .setAuthentication(authentication);
+
+            System.out.println(
+                    "AUTHENTICATION SUCCESS = "
+                            + SecurityContextHolder.getContext()
+                                    .getAuthentication()
+                                    .getAuthorities()
+            );
 
         } catch (Exception e) {
 
-            // Invalid or expired token
+            System.out.println(
+                    "===== JWT AUTHENTICATION ERROR ====="
+            );
+
+            System.out.println(
+                    "ERROR TYPE = " + e.getClass().getName()
+            );
+
+            System.out.println(
+                    "ERROR MESSAGE = " + e.getMessage()
+            );
+
+            e.printStackTrace();
+
             SecurityContextHolder.clearContext();
         }
+
+        System.out.println(
+                "===== JWT FILTER END ====="
+        );
 
         filterChain.doFilter(request, response);
     }
