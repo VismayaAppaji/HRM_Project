@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -68,10 +69,15 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
+        // Allow local frontend + deployed Render frontend
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
+                List.of(
+                        "http://localhost:5173",
+                        "https://hrm-project-2-abgh.onrender.com"
+                )
         );
 
+        // Allowed HTTP methods
         configuration.setAllowedMethods(
                 List.of(
                         "GET",
@@ -83,10 +89,12 @@ public class SecurityConfig {
                 )
         );
 
+        // Allow request headers
         configuration.setAllowedHeaders(
                 List.of("*")
         );
 
+        // Allow cookies/credentials if required
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
@@ -112,7 +120,7 @@ public class SecurityConfig {
 
         http
 
-            // Disable CSRF for the stateless REST API
+            // Disable CSRF for REST API
             .csrf(csrf -> csrf.disable())
 
             // Enable CORS
@@ -122,14 +130,14 @@ public class SecurityConfig {
                     )
             )
 
-            // Use JWT-based authentication
+            // JWT = stateless
             .sessionManagement(session ->
                     session.sessionCreationPolicy(
                             SessionCreationPolicy.STATELESS
                     )
             )
 
-            // Configure authentication provider
+            // Authentication provider
             .authenticationProvider(
                     authenticationProvider
             )
@@ -140,10 +148,17 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                    // Allow access to the root URL
+                    // Root
                     .requestMatchers("/").permitAll()
 
-                    // Allow login without authentication
+                    // IMPORTANT:
+                    // Allow browser CORS preflight requests
+                    .requestMatchers(
+                            HttpMethod.OPTIONS,
+                            "/**"
+                    ).permitAll()
+
+                    // Login
                     .requestMatchers(
                             "/api/auth/login"
                     ).permitAll()
@@ -233,14 +248,13 @@ public class SecurityConfig {
                     ).hasAnyRole("HR", "EMPLOYEE")
 
                     // =========================
-                    // ALL OTHER ENDPOINTS
+                    // EVERYTHING ELSE
                     // =========================
 
-                    // Require authentication by default
                     .anyRequest().authenticated()
             );
 
-        // Add JWT authentication filter
+        // JWT authentication filter
         http.addFilterBefore(
                 jwtAuthenticationFilter,
                 UsernamePasswordAuthenticationFilter.class
